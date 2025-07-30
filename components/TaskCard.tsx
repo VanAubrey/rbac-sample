@@ -1,13 +1,13 @@
 import { Task } from "@/types";
+import Link from "next/link";
 
 interface TaskCardProps {
   task: Task;
   onEdit: (task: Task) => void;
   onDelete: (taskId: number) => void;
-  onViewDetails: (task: Task) => void;
 }
 
-export default function TaskCard({ task, onEdit, onDelete, onViewDetails }: TaskCardProps) {
+export default function TaskCard({ task, onEdit, onDelete }: TaskCardProps) {
   const formatDate = (date: Date | null) => {
     if (!date) return 'N/A';
     return new Date(date).toLocaleDateString('en-US', {
@@ -30,12 +30,12 @@ export default function TaskCard({ task, onEdit, onDelete, onViewDetails }: Task
       <div className="flex justify-between items-start mb-2">
         <h3 className="text-lg font-semibold text-gray-900 truncate">{task.name}</h3>
         <div className="flex space-x-2 ml-2">
-          <button
-            onClick={() => onViewDetails(task)}
+          <Link
+            href={`/tasks/${task.id}`}
             className="text-green-600 hover:text-green-800 text-sm font-medium"
           >
             View
-          </button>
+          </Link>
           <button
             onClick={() => onEdit(task)}
             className="text-blue-600 hover:text-blue-800 text-sm font-medium"

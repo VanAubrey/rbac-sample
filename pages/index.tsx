@@ -1,18 +1,31 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import TaskCard from '../components/TaskCard';
 import TaskForm from "@/components/TaskForm";
-import TaskDetailsModal from '../components/TaskDetailsModal';
 import { Task, CreateTaskData, UpdateTaskData } from '@/types';
 
 export default function Home() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+
+  // Check if we should open edit modal from URL params
+  useEffect(() => {
+    if (router.query.edit && tasks.length > 0) {
+      const taskId = parseInt(router.query.edit as string);
+      const taskToEdit = tasks.find(task => task.id === taskId);
+      if (taskToEdit) {
+        openEditModal(taskToEdit);
+        // Clean up URL
+        router.replace('/', undefined, { shallow: true });
+      }
+    }
+  }, [router.query.edit, tasks]);
 
   // Fetch tasks
   const fetchTasks = async () => {
@@ -124,18 +137,8 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
-  const openDetailsModal = (task: Task) => {
-    setSelectedTask(task);
-    setIsDetailsModalOpen(true);
-  };
-
   const closeModal = () => {
     setIsModalOpen(false);
-    setSelectedTask(null);
-  };
-
-  const closeDetailsModal = () => {
-    setIsDetailsModalOpen(false);
     setSelectedTask(null);
   };
 
@@ -213,27 +216,19 @@ export default function Home() {
                 task={task}
                 onEdit={openEditModal}
                 onDelete={handleDeleteTask}
-                onViewDetails={openDetailsModal}
               />
             ))}
           </div>
         )}
       </div>
 
-      {/* Task Modal */}
+      {/* Task Form Modal */}
       <TaskForm
         isOpen={isModalOpen}
         onClose={closeModal}
         onSave={handleSaveTask}
         task={selectedTask}
         mode={modalMode}
-      />
-
-      {/* Task Details Modal */}
-      <TaskDetailsModal
-        isOpen={isDetailsModalOpen}
-        onClose={closeDetailsModal}
-        task={selectedTask}
       />
     </div>
   );
