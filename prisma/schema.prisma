@@ -52,3 +52,13 @@ model User {
   accounts      Account[]
   sessions      Session[]
 }
+
+model Task {
+  id            Int       @id @default(autoincrement())
+  uuid          String    @unique @db.Char(36)
+  created_at    DateTime? @default(now()) @db.Timestamp(0)
+  updated_at    DateTime? @default(now()) @db.Timestamp(0)
+  name          String    @db.VarChar(255)
+  description   String?   @db.Text
+  userId        String
+}
