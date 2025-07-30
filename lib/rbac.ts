@@ -8,8 +8,7 @@ export const GROUP_ROLE_MAPPING = {
   "corehub-team@alphaus.cloud": "CoreHubMember",
   "admin@alphaus.cloud": "Admin",
   // Temporary mappings based on your current groups
-  "uni-one@alphaus.cloud": "CoreHubMember",
-  "all@alphaus.cloud": "Admin"
+  "uni-one@alphaus.cloud": "ProfServicesMember",
 } as const;
 
 export type RoleName = typeof GROUP_ROLE_MAPPING[keyof typeof GROUP_ROLE_MAPPING];
