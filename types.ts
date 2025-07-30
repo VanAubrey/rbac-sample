@@ -12,15 +12,18 @@ export interface Task {
   updated_at: Date | null;
   name: string;
   description: string | null;
+  progress: number;
   userId: string;
 }
 
 export interface CreateTaskData {
   name: string;
   description?: string;
+  progress?: number;
 }
 
 export interface UpdateTaskData {
   name?: string;
   description?: string;
+  progress?: number;
 }
