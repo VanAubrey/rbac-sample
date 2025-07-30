@@ -22,10 +22,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   switch (req.method) {
     case 'GET':
       try {
-        const task = await prisma.task.findFirst({
+        const task = await prisma.task.findUnique({
           where: { 
-            id: parseInt(id as string),
-            userId 
+            id: parseInt(id as string)
           }
         });
 
@@ -41,12 +40,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case 'PUT':
       try {
-        const { name, description } = req.body;
+        const { name, description, progress } = req.body;
 
-        const existingTask = await prisma.task.findFirst({
+        const existingTask = await prisma.task.findUnique({
           where: { 
-            id: parseInt(id as string),
-            userId 
+            id: parseInt(id as string)
           }
         });
 
@@ -54,11 +52,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(404).json({ error: 'Task not found' });
         }
 
+        if (progress !== undefined && (progress < 0 || progress > 100)) {
+          return res.status(400).json({ error: 'Progress must be between 0 and 100' });
+        }
+
         const updatedTask = await prisma.task.update({
           where: { id: parseInt(id as string) },
           data: {
             name: name || existingTask.name,
             description: description !== undefined ? description : existingTask.description,
+            progress: progress !== undefined ? progress : existingTask.progress,
             updated_at: new Date()
           }
         });
@@ -71,10 +74,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case 'DELETE':
       try {
-        const existingTask = await prisma.task.findFirst({
+        const existingTask = await prisma.task.findUnique({
           where: { 
-            id: parseInt(id as string),
-            userId 
+            id: parseInt(id as string)
           }
         });
 

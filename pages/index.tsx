@@ -1,7 +1,8 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from 'react';
 import TaskCard from '../components/TaskCard';
-import TaskForm from '../components/TaskForm';
+import TaskForm from "@/components/TaskForm";
+import TaskDetailsModal from '../components/TaskDetailsModal';
 import { Task, CreateTaskData, UpdateTaskData } from '@/types';
 
 export default function Home() {
@@ -9,6 +10,7 @@ export default function Home() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
@@ -122,17 +124,26 @@ export default function Home() {
     setIsModalOpen(true);
   };
 
+  const openDetailsModal = (task: Task) => {
+    setSelectedTask(task);
+    setIsDetailsModalOpen(true);
+  };
+
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedTask(null);
   };
 
+  const closeDetailsModal = () => {
+    setIsDetailsModalOpen(false);
+    setSelectedTask(null);
+  };
+
   const handleSaveTask = (data: CreateTaskData | UpdateTaskData) => {
     if (modalMode === 'create') {
-      // Using type assertion since we know the data will be CreateTaskData in create mode
       handleCreateTask(data as CreateTaskData);
     } else {
-      handleUpdateTask(data);
+      handleUpdateTask(data as UpdateTaskData);
     }
   };
 
@@ -202,6 +213,7 @@ export default function Home() {
                 task={task}
                 onEdit={openEditModal}
                 onDelete={handleDeleteTask}
+                onViewDetails={openDetailsModal}
               />
             ))}
           </div>
@@ -215,6 +227,13 @@ export default function Home() {
         onSave={handleSaveTask}
         task={selectedTask}
         mode={modalMode}
+      />
+
+      {/* Task Details Modal */}
+      <TaskDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={closeDetailsModal}
+        task={selectedTask}
       />
     </div>
   );

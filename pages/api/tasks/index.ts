@@ -1,6 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
-import { options } from "../auth/[...nextauth]";
+import { options } from '../auth/[...nextauth]';
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -23,7 +23,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     case 'GET':
       try {
         const tasks = await prisma.task.findMany({
-          where: { userId },
           orderBy: { created_at: 'desc' }
         });
         res.status(200).json(tasks);
@@ -34,10 +33,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     case 'POST':
       try {
-        const { name, description } = req.body;
+        const { name, description, progress = 0 } = req.body;
 
         if (!name) {
           return res.status(400).json({ error: 'Task name is required' });
+        }
+
+        if (progress < 0 || progress > 100) {
+          return res.status(400).json({ error: 'Progress must be between 0 and 100' });
         }
 
         const task = await prisma.task.create({
@@ -45,6 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             uuid: uuidv4(),
             name,
             description: description || null,
+            progress,
             userId
           }
         });
