@@ -51,6 +51,7 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  userRoles     UserRole[]    // Added for RBAC
 }
 
 model Task {
@@ -62,4 +63,50 @@ model Task {
   description   String?   @db.Text
   progress      Int       @default(0)
   userId        String
+  isPrivate     Boolean   @default(false) // Added for privacy control
+}
+
+model Role {
+  id            Int              @id @default(autoincrement())
+  uuid          String           @unique @db.Char(36)
+  name          String           @unique // e.g. "Admin", "CoreHubMember", "ProfServicesMember"
+  permissions   RolePermission[]
+  userRoles     UserRole[]
+  created_at    DateTime         @default(now()) @db.Timestamp(0)
+  updated_at    DateTime         @default(now()) @updatedAt @db.Timestamp(0)
+}
+
+model Permission {
+  id              Int              @id @default(autoincrement())
+  uuid            String           @unique @db.Char(36)
+  name            String           // e.g. "viewTask", "editTask", "deleteTask"
+  action          String           // e.g. "read", "update", "delete"
+  rolePermissions RolePermission[]
+  created_at      DateTime         @default(now()) @db.Timestamp(0)
+  updated_at      DateTime         @default(now()) @updatedAt @db.Timestamp(0)
+}
+
+model RolePermission {
+  id              Int        @id @default(autoincrement())
+  roleId          Int
+  permissionId    Int
+  role            Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission      Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+}
+
+model UserRole {
+  id              Int      @id @default(autoincrement())
+  userId          String
+  roleId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role            Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  created_at      DateTime @default(now()) @db.Timestamp(0)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
 }
