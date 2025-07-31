@@ -49,8 +49,11 @@ model User {
   email         String?       @unique
   emailVerified DateTime?
   image         String?
+  currentTeamId Int?          @map("current_team_id")
   accounts      Account[]
   sessions      Session[]
+  teams         Team[]
+  teamUsers     TeamUser[]
 }
 
 model Task {
@@ -62,4 +65,78 @@ model Task {
   description   String?   @db.Text
   progress      Int       @default(0)
   userId        String
+}
+
+model Team {
+  id              Int         @id @default(autoincrement())
+  name            String
+  ownerId         String?     @map("owner_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  owner           User?       @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  teamUsers       TeamUser[]
+  roles           Role[]
+  permissions     Permission[]
+  rolePermissions RolePermission[]
+
+  @@index ([ownerId])
+}
+
+model TeamUser {
+  id              Int         @id @default(autoincrement())
+  teamId          Int         @map("team_id")
+  userId          String      @map("user_id")
+  roleId          Int         @map("role_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Restrict)
+
+  @@index ([teamId])
+  @@index ([userId])
+  @@index ([roleId])
+}
+
+model Role {
+  id              Int         @id @default(autoincrement())
+  name            String      @unique
+  description     String?
+  teamId          Int         @map("team_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  rolePermissions RolePermission[]
+  team            Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  TeamUser        TeamUser[]
+
+  @@index ([teamId])
+}
+
+model Permission {
+  id              Int         @id @default(autoincrement())
+  name            String      @unique
+  description     String?
+  teamId          Int         @map("team_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  rolePermissions RolePermission[]
+  team            Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index ([teamId])
+}
+
+model RolePermission {
+  id              Int         @id @default(autoincrement())
+  roleId          Int         @map("role_id")
+  permissionId    Int         @map("permission_id")
+  teamId          Int         @map("team_id")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  role            Role        @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission      Permission  @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  team            Team        @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index ([roleId])
+  @@index ([permissionId])
+  @@index ([teamId])
 }
