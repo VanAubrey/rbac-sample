@@ -14,6 +14,16 @@ datasource db {
   relationMode = "prisma"
 }
 
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum TaskVisibility {
+  PUBLIC
+  PRIVATE
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -51,6 +61,29 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
+  tasks         Task[]        @relation("UserTasks")
+  userTeams     UserTeam[]
+}
+
+model Team {
+  id            Int           @id @default(autoincrement())
+  uuid          String        @unique @db.Char(36)
+  name          String        @unique
+  tasks         Task[]        @relation("TeamTasks")
+  userTeams     UserTeam[]
+}
+
+model UserTeam {
+  id            Int           @id @default(autoincrement())
+  userId        String
+  teamId        Int
+  role          Role          @default(MEMBER)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([teamId])
 }
 
 model Task {
@@ -62,4 +95,12 @@ model Task {
   description   String?   @db.Text
   progress      Int       @default(0)
   userId        String
+  visibility    TaskVisibility @default(PUBLIC)
+  teamId        Int?
+
+  user User  @relation("UserTasks", fields: [userId], references: [id], onDelete: Cascade)
+  team Team? @relation("TeamTasks", fields: [teamId], references: [id])
+
+  @@index([userId])
+  @@index([teamId])
 }
