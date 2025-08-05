@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "prisma generate && next build --no-lint",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "create-teams": "npx tsx scripts/create-teams.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
