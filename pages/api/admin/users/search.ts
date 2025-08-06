@@ -1,25 +1,34 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getSession } from 'next-auth/react';
+import { getServerSession } from 'next-auth/next';
+import { options } from '../../auth/[...nextauth]';
 import { prisma } from '@/utils/db';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getSession({ req });
+  const session = await getServerSession(req, res, options);
   const { q, teamId } = req.query;
 
+  console.log('Session in search API:', session); // Debug log
+
   if (!session?.user?.id) {
+    console.log('No session or user ID found in search API'); // Debug log
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   // Check if user is admin
-  const isAdmin = await prisma.userTeam.findFirst({
-    where: {
-      userId: session.user.id,
-      role: 'ADMIN'
-    }
-  });
+  try {
+    const isAdmin = await prisma.userTeam.findFirst({
+      where: {
+        userId: session.user.id,
+        role: 'ADMIN'
+      }
+    });
 
-  if (!isAdmin) {
-    return res.status(403).json({ error: 'Admin access required' });
+    if (!isAdmin) {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+  } catch (error) {
+    console.error('Error checking admin status in search API:', error);
+    return res.status(500).json({ error: 'Database error' });
   }
 
   if (req.method === 'GET') {
