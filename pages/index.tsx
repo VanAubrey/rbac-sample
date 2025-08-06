@@ -1,6 +1,8 @@
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
+import { Users } from 'lucide-react'; // Make sure you have lucide-react installed
 import TaskCard from '../components/TaskCard';
 import TaskForm from "@/components/TaskForm";
 import { Task, CreateTaskData, UpdateTaskData } from '@/types';
@@ -13,6 +15,38 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminCheckLoading, setAdminCheckLoading] = useState(true);
+
+  // Check if current user is admin
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!session?.user?.id) {
+        setAdminCheckLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/admin/teams');
+        if (response.ok) {
+          setIsAdmin(true);
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error('Error checking admin status:', error);
+        setIsAdmin(false);
+      } finally {
+        setAdminCheckLoading(false);
+      }
+    };
+
+    if (session) {
+      checkAdminStatus();
+    } else {
+      setAdminCheckLoading(false);
+    }
+  }, [session]);
 
   // Check if we should open edit modal from URL params
   useEffect(() => {
@@ -172,16 +206,91 @@ export default function Home() {
       <div className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
-            <h1 className="text-2xl font-bold text-gray-900">Task Manager</h1>
+            {/* Left side - Logo/Title and Navigation */}
+            <div className="flex items-center space-x-8">
+              <h1 className="text-2xl font-bold text-gray-900">Task Manager</h1>
+              
+              {/* Navigation Links */}
+              <nav className="hidden md:flex items-center space-x-6">
+                <Link
+                  href="/"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    router.pathname === '/'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  Tasks
+                </Link>
+                
+                {/* Team Management Link - Only visible to admins */}
+                {isAdmin && (
+                  <Link
+                    href="/team-management"
+                    className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                      router.pathname === '/team-management'
+                        ? 'bg-blue-100 text-blue-700'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                    }`}
+                  >
+                    <Users size={16} />
+                    <span>Team Management</span>
+                  </Link>
+                )}
+              </nav>
+            </div>
+
+            {/* Right side - User Info and Sign Out */}
             <div className="flex items-center space-x-4">
-              <span className="text-gray-700">Welcome, {session.user?.name}</span>
+              {/* Admin Badge */}
+              {isAdmin && !adminCheckLoading && (
+                <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">
+                  Admin
+                </span>
+              )}
+              
+              <span className="text-gray-700 hidden sm:inline">
+                Welcome, {session.user?.name}
+              </span>
+              
               <button
-                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
                 onClick={() => signOut()}
               >
                 Sign out
               </button>
             </div>
+          </div>
+
+          {/* Mobile Navigation */}
+          <div className="md:hidden pb-4">
+            <nav className="flex space-x-4">
+              <Link
+                href="/"
+                className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  router.pathname === '/'
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                Tasks
+              </Link>
+              
+              {/* Team Management Link - Mobile */}
+              {isAdmin && (
+                <Link
+                  href="/team-management"
+                  className={`px-3 py-2 rounded-md text-sm font-medium transition-colors flex items-center space-x-2 ${
+                    router.pathname === '/team-management'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                  }`}
+                >
+                  <Users size={16} />
+                  <span>Teams</span>
+                </Link>
+              )}
+            </nav>
           </div>
         </div>
       </div>
@@ -192,7 +301,7 @@ export default function Home() {
         <div className="mb-6">
           <button
             onClick={openCreateModal}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors"
           >
             + Create New Task
           </button>
